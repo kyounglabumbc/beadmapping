@@ -1,10 +1,10 @@
-function [ MatOfFrames, FileName ] = readSif( )
+function [ MatOfFrames ] = readSif(absfilepath)
 %READSIF Summary of this function goes here
 %   Detailed explanation goes here
 rc=atsif_setfileaccessmode(0); %sets up the sif library to set the access property to load the entire file
 
- [FileName,PathName,FilterIndex]=uigetfile('*.sif;*.SIF', 'Select SIF'); % opens dialog to let the user select sif to open
-absfilepath=strcat(PathName,FileName);; % sets up the file name
+ %[FileName,PathName,FilterIndex]=uigetfile('*.sif;*.SIF', 'Select SIF'); % opens dialog to let the user select sif to open
+%absfilepath=strcat(PathName,FileName);; % sets up the file name
 rc=atsif_readfromfile(absfilepath); % attempt to open the file
 
 if (rc == 22002) % check that the file was successfully opened

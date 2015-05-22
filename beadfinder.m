@@ -1,15 +1,36 @@
-function [  ] = beadfinder(sensitivity, edgethreshold )
+function [  ] = beadfinder(timeStep, bleed, coeffName, fname, params)
+if nargin == 0 %if no arguments, we are not batching
+    %non batch option
+    [FileName,PathName,FilterIndex]=uigetfile('*.sif;*.SIF', 'Select SIF'); % opens dialog to let the user select sif to open
+    fname=strcat(PathName,FileName); % sets up the file name
+    coeffName = input('Please enter the coefficient file name: ', 's');
+    timeStep = input('Please enter the time step: ');
+    bleed = input('Please enter the bleed factor: ');
+    %check if you want to change config
+    if(input('Would you like to change the config? Enter y or n: ', 's') == 'y')
+        params = configure();
+    else %if not, load the config
+        try
+            %try to load config file
+            fileID = fopen('config.txt');
+            params = textscan(fileID, '%f,%f,%f,%f,%s');
+            fclose(fileID);
+        catch
+            %if config file not there, prompt for values and create it
+            disp('Missing config file: ');
+            params = configure();
+        end
+    end
+end
 
+minRadius = params{1}; %default 2
+maxRadius = params{2}; %default 7
+sensitivity = params{3};
+edgethreshold = params{4};
+outputPath = strcat(params{5}{1},'/');
+[fpathonly, fnameonly, fext] = fileparts(fname);
 
-
-
-%RUN FROM beadmapping
-coeffName = input('Please enter the coefficient file name: ', 's');
-timeStep = input('Please enter the time step: ');
-bleed = input('Please enter the bleed factor: ');
-%read the image from the sif file
-
-[A, fname] = (readSif());
+A = (readSif(fname));
 A = rot90(A);
 %get the average of all the frames
 %avgA = im2uint16(mean(A, 3), 'indexed');
@@ -25,11 +46,11 @@ cleanA = clean(avgA, 7);
 %cleanA = avgA;
 %imwrite(avgA, 'cleantiff.tif', 'tif');
 %find and plot the circles
-[centers, radii] = findCircles(cleanA, 2, 7, sensitivity,edgethreshold);
+[centers, radii] = findCircles(cleanA, minRadius, maxRadius, sensitivity,edgethreshold);
 %c = centers;
 %r = radii;
 %standardize the circles
-[c, r] = cleanCircles(centers, radii, 5);
+[c, r] = cleanCircles(centers, radii, 2*max(radii));
 %c = centers;
 %r = radii;
 %coeffName = strcat('mapping/',fname(1),'rawtiff.coeff');
@@ -75,13 +96,13 @@ figure(2);
 
 imagesc(avgA);
 
-[lcenters, fradii] = findCircles(leftCopy+warpIm, 2, 7, 1);
+[lcenters, fradii] = findCircles(leftCopy+warpIm, minRadius, maxRadius, sensitivity, edgethreshold);
 
 %clean the circles, using the diameter as the min dist between two centers
 [lcenters, fradii] = cleanCircles(lcenters, fradii, 2*max(fradii));
 %standardize the nonzero radii
-mask = fradii ~= 0;
-fradii = max(fradii).*mask;
+mask = fradii ~= 0; %create a mask for nonzero radii
+fradii = max(fradii).*mask;  %set all nonzero radii equal to max
 [m n]=size(lcenters);
 
 rcenters = zeros(m,n);
@@ -107,9 +128,9 @@ len = len(1);
 lefttraces = getTraces(A,lcenters, fradii);
 righttraces = getTraces(A, rcenters,fradii);
 %write the master csvs
-csvwrite(strcat('./output/',fname(1),'masterleft.csv'), lefttraces);
-csvwrite(strcat('./output/',fname(1), 'masterright.csv'), righttraces);
-%csvwrite(strcat('output/',fname(1), 'coordinates.csv'), [leftcenters rightcenters]);
+csvwrite(strcat(outputPath,fnameonly,'masterleft.csv'), lefttraces);
+csvwrite(strcat(outputPath,fnameonly, 'masterright.csv'), righttraces);
+csvwrite(strcat(outputPath,fnameonly, 'coordinates.csv'), [lcenters rcenters]);
 [r, c] = size(lefttraces);
 
 newleft = lefttraces-bleed*righttraces;
@@ -124,6 +145,6 @@ for bead=1:r
         traceMat(frame-1,:) = [time, newleft(bead,frame), righttraces(bead,frame)];
         time = time + timeStep;
     end
-    csvwrite(strcat('output/',fname(1),'trace',int2str(bead),'.csv'),traceMat);
+    csvwrite(strcat(outputPath,fnameonly,'trace',int2str(bead),'.csv'),traceMat);
 end
 end
