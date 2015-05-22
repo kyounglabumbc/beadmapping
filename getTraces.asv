@@ -1,0 +1,20 @@
+function [ traceArray ] = getTraces( frames, centers, radii )
+%GETTRACES Summary of this function goes here
+%   Detailed explanation goes here
+frame_dim = size(frames);
+frame_len = frame_dim(1);
+frame_width = frame_dim(2);
+num_frames = frame_dim(3);
+num_circles = length(radii);
+traceArray = zeros(num_circles, num_frames);
+for i=1:num_frames
+   for j = 1:num_circles
+      currentCenter = centers(j,:);
+      currentRadius = radii(j);
+      C = sqrt((frame_len-currentCenter(1).^2+(frame_width-currentCenter(2)).^2))<=currentRadius);
+      
+   end
+end
+
+end
+
