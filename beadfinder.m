@@ -75,7 +75,7 @@ figure(2);
 
 imagesc(avgA);
 
-[lcenters, fradii] = findCircles(leftCopy+warpIm, avgA, 2, 7, 1);
+[lcenters, fradii] = findCircles(leftCopy+warpIm, 2, 7, 1);
 
 %clean the circles, using the diameter as the min dist between two centers
 [lcenters, fradii] = cleanCircles(lcenters, fradii, 2*max(fradii));
