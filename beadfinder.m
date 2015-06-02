@@ -12,7 +12,7 @@ if nargin == 0 %if no arguments, we are not batching
     else %if not, load the config
         try
             %try to load config file
-            fileID = fopen('config.txt');
+            fileID = fopen('C:\Users\HPENVY\Documents\MATLAB\beadmapping\config.txt');
             params = textscan(fileID, '%f,%f,%f,%f,%s');
             fclose(fileID);
         catch
@@ -54,7 +54,7 @@ cleanA = clean(avgA, 7);
 %c = centers;
 %r = radii;
 %coeffName = strcat('mapping/',fname(1),'rawtiff.coeff');
-coeff = load(strcat('mapping/',coeffName, '.coeff'));
+coeff = load(strcat('C:\Users\HPENVY\Documents\MATLAB\beadmapping\mapping/',coeffName, '.coeff'));
 width = 512;
 
 maxDist = 4*sqrt(2);
@@ -127,6 +127,9 @@ len = len(1);
 
 lefttraces = getTraces(A,lcenters, fradii);
 righttraces = getTraces(A, rcenters,fradii);
+%get the centers from matrix indices to x-y coordinates
+%lcoordinates = [lcenters(:,2), 512-lcenters(:,1)];
+%rcoordinates = [rcenters(:,2), 512-rcenters(:,1)];
 %write the master csvs
 csvwrite(strcat(outputPath,fnameonly,'masterleft.csv'), lefttraces);
 csvwrite(strcat(outputPath,fnameonly, 'masterright.csv'), righttraces);
