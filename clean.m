@@ -6,5 +6,9 @@ background = imopen(dirtyImageArr,strel('disk',rad));
 
 cleanImageArr = dirtyImageArr-background;
 
+%now apply a gaussian filter
+h=fspecial('gaussian',[3 3],1);
+cleanImageArr=imfilter(cleanImageArr,h,'replicate','conv');
+
 end
 

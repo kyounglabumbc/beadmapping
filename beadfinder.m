@@ -1,4 +1,4 @@
-function [  ] = beadfinder(timeStep, bleed, coeffName, fname, params)
+function [  ] = beadfinder(timeStep, bleed, coeffName, fname, frameNum, params)
 if nargin == 0 %if no arguments, we are not batching
     %non batch option
     [FileName,PathName,FilterIndex]=uigetfile('*.sif;*.SIF', 'Select SIF'); % opens dialog to let the user select sif to open
@@ -6,13 +6,14 @@ if nargin == 0 %if no arguments, we are not batching
     coeffName = input('Please enter the coefficient file name: ', 's');
     timeStep = input('Please enter the time step: ');
     bleed = input('Please enter the bleed factor: ');
+    frameNum = input('Please enter the frame number to use: ');
     %check if you want to change config
     if(input('Would you like to change the config? Enter y or n: ', 's') == 'y')
         params = configure();
     else %if not, load the config
         try
             %try to load config file
-            fileID = fopen('C:\Users\HPENVY\Documents\MATLAB\beadmapping\config.txt');
+            fileID = fopen('D:\Projects\kyoung\beadmapping\config.txt');
             params = textscan(fileID, '%f,%f,%f,%f,%s');
             fclose(fileID);
         catch
@@ -22,6 +23,7 @@ if nargin == 0 %if no arguments, we are not batching
         end
     end
 end
+
 
 minRadius = params{1}; %default 2
 maxRadius = params{2}; %default 7
@@ -34,15 +36,20 @@ A = (readSif(fname));
 A = rot90(A);
 %get the average of all the frames
 %avgA = im2uint16(mean(A, 3), 'indexed');
-avgA = mean(A, 3);
+%avgA = mean(A, 3);
 
+[s1,s2,length] = size(A);
+if(frameNum>length)
+   error('frame number exceeds number of frames');
+end
+avgA = A(:,:,frameNum);
 %avgA = im2uint8(avgA);
 %please fix this to set the correct scaling factor, hardcoded for now
 %X16 = uint16(3*avgA -1);
 %avgA = im2uint8(X16);
 %imwrite(avgA, 'rawtiff.tif', 'tif');
 %clean the result to reduce background noise
-cleanA = clean(avgA, 7);
+cleanA = clean(avgA, floor(0.25*maxRadius));
 %cleanA = avgA;
 %imwrite(avgA, 'cleantiff.tif', 'tif');
 %find and plot the circles
@@ -50,16 +57,26 @@ cleanA = clean(avgA, 7);
 %c = centers;
 %r = radii;
 %standardize the circles
-[c, r] = cleanCircles(centers, radii, 2*max(radii));
-%c = centers;
-%r = radii;
+%[c, r] = cleanCircles(centers, radii, 2*max(radii));
+c = centers;
+r = radii;
 %coeffName = strcat('mapping/',fname(1),'rawtiff.coeff');
-coeff = load(strcat('C:\Users\HPENVY\Documents\MATLAB\beadmapping\mapping/',coeffName, '.coeff'));
+coeff = load(strcat('D:\Projects\kyoung\beadmapping\mapping/',coeffName, '.coeff'));
 width = 512;
 
 maxDist = 4*sqrt(2);
 %get the rough pairs of points
 [left, right] = findPairs(c, coeff, width, maxDist);
+if(size(left,1)<3 || size(right,1)<3)
+   disp('not enough pairs!');
+   getTracesAnyway = input(' Would you like to get traces anyway? y or n: ', 's');
+   if(getTracesAnyway == 'y')
+      pairlessTraces(A, centers, radii, outputPath, fnameonly);
+      exit;
+   else
+      exit;
+   end
+end
 %create an affine transformation 
 tForm = fitgeotrans(right, left, 'affine');
 
@@ -99,10 +116,10 @@ imagesc(avgA);
 [lcenters, fradii] = findCircles(leftCopy+warpIm, minRadius, maxRadius, sensitivity, edgethreshold);
 
 %clean the circles, using the diameter as the min dist between two centers
-[lcenters, fradii] = cleanCircles(lcenters, fradii, 2*max(fradii));
+%[lcenters, fradii] = cleanCircles(lcenters, fradii, 2*max(fradii));
 %standardize the nonzero radii
-mask = fradii ~= 0; %create a mask for nonzero radii
-fradii = max(fradii).*mask;  %set all nonzero radii equal to max
+%mask = fradii ~= 0; %create a mask for nonzero radii
+%fradii = max(fradii).*mask;  %set all nonzero radii equal to max
 [m n]=size(lcenters);
 
 rcenters = zeros(m,n);
@@ -120,7 +137,7 @@ viscircles(rcenters, fradii,'EdgeColor','b');
 colormap gray;
 figure(1);
 colormap gray;
-imagesc(avgA);
+imagesc(cleanA);
 len = size([left;right]);
 len = len(1);
 %viscircles([left;right], 5*ones(len,1),'EdgeColor','b');
@@ -136,7 +153,7 @@ csvwrite(strcat(outputPath,fnameonly, 'masterright.csv'), righttraces);
 csvwrite(strcat(outputPath,fnameonly, 'coordinates.csv'), [lcenters rcenters]);
 [r, c] = size(lefttraces);
 
-newleft = lefttraces-bleed*righttraces;
+newright = righttraces-bleed*lefttraces;
 
 %write the trace files
 for bead=1:r
@@ -145,7 +162,7 @@ for bead=1:r
     time = 0;
     %skipping first and last frame
     for frame=2:(c-1)
-        traceMat(frame-1,:) = [time, newleft(bead,frame), righttraces(bead,frame)];
+        traceMat(frame-1,:) = [time, lefttraces(bead,frame), newright(bead,frame)];
         time = time + timeStep;
     end
     csvwrite(strcat(outputPath,fnameonly,'trace',int2str(bead),'.csv'),traceMat);
