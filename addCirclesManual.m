@@ -16,6 +16,9 @@ newCentersR = [];
 newRadii = [];
 numNew = 0;
 while(1)
+   if(input('Do you want to add another circle? y or n: ','s')~='y')
+      return 
+   end 
    disp('Click where you would like to add a center'); 
    [x,y] = ginput(1); 
    disp('Enter the radius');
@@ -43,9 +46,7 @@ while(1)
       newCentersL(numNew,1) = lx;
       newCentersL(numNew,2) = ly;
    end
-   if(input('Do you want to add another? y or n','s')~='y')
-      return 
-   end
+
    
 end
 

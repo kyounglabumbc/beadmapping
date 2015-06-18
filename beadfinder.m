@@ -13,7 +13,7 @@ if nargin == 0 %if no arguments, we are not batching
     else %if not, load the config
         try
             %try to load config file
-            fileID = fopen('D:\Projects\kyoung\beadmapping\config.txt');
+            fileID = fopen('C:\Users\HPENVY\Documents\MATLAB\beadmapping\config.txt');
             params = textscan(fileID, '%f,%f,%f,%f,%s');
             fclose(fileID);
         catch
@@ -29,10 +29,11 @@ minRadius = params{1}; %default 2
 maxRadius = params{2}; %default 7
 sensitivity = params{3};
 edgethreshold = params{4};
-outputPath = strcat(params{5}{1},'/');
+outputPath = strcat(params{5},'/');
 [fpathonly, fnameonly, fext] = fileparts(fname);
 
 A = (readSif(fname));
+disp('file loaded.');
 A = rot90(A);
 %get the average of all the frames
 %avgA = im2uint16(mean(A, 3), 'indexed');
@@ -49,7 +50,7 @@ avgA = A(:,:,frameNum);
 %avgA = im2uint8(X16);
 %imwrite(avgA, 'rawtiff.tif', 'tif');
 %clean the result to reduce background noise
-cleanA = clean(avgA, floor(0.25*maxRadius));
+cleanA = clean(avgA, floor(0.45*maxRadius));
 %cleanA = avgA;
 %imwrite(avgA, 'cleantiff.tif', 'tif');
 %find and plot the circles
@@ -61,12 +62,15 @@ cleanA = clean(avgA, floor(0.25*maxRadius));
 c = centers;
 r = radii;
 %coeffName = strcat('mapping/',fname(1),'rawtiff.coeff');
-coeff = load(strcat('D:\Projects\kyoung\beadmapping\mapping/',coeffName, '.coeff'));
+coeff = load(strcat('C:\Users\HPENVY\Documents\MATLAB\beadmapping\mapping\',coeffName, '.coeff'));
 width = 512;
-
+if(size(c,1)<1)
+    error('Did not find any signals!');
+end
 maxDist = 4*sqrt(2);
 %get the rough pairs of points
 [left, right] = findPairs(c, coeff, width, maxDist);
+disp('found pairs');
 if(size(left,1)<3 || size(right,1)<3)
    disp('not enough pairs!');
    getTracesAnyway = input(' Would you like to get traces anyway? y or n: ', 's');
@@ -113,7 +117,7 @@ figure(2);
 
 imagesc(avgA);
 
-[lcenters, fradii] = findCircles(leftCopy+warpIm, minRadius, maxRadius, sensitivity, edgethreshold);
+[lcenters, fradii] = findCircles(leftCopy+warpIm, minRadius, maxRadius, sensitivity, 2*edgethreshold);
 
 %clean the circles, using the diameter as the min dist between two centers
 %[lcenters, fradii] = cleanCircles(lcenters, fradii, 2*max(fradii));
@@ -154,9 +158,12 @@ righttraces = getTraces(A, rcenters,fradii);
 %lcoordinates = [lcenters(:,2), 512-lcenters(:,1)];
 %rcoordinates = [rcenters(:,2), 512-rcenters(:,1)];
 %write the master csvs
-csvwrite(strcat(outputPath,fnameonly,'masterleft.csv'), lefttraces);
-csvwrite(strcat(outputPath,fnameonly, 'masterright.csv'), righttraces);
-csvwrite(strcat(outputPath,fnameonly, 'coordinates.csv'), [lcenters rcenters]);
+ltracename = strcat(outputPath,fnameonly,'masterleft.csv');
+rtracename = strcat(outputPath,fnameonly,'masterright.csv');
+coordname = strcat(outputPath,fnameonly,'coordinates.csv');
+csvwrite(ltracename{1}, lefttraces);
+csvwrite(rtracename{1}, righttraces);
+csvwrite(coordname{1}, [lcenters(:,1),512-lcenters(:,2),rcenters(:,1),512-rcenters(:,2)]);
 [r, c] = size(lefttraces);
 
 newright = righttraces-bleed*lefttraces;
@@ -171,6 +178,7 @@ for bead=1:r
         traceMat(frame-1,:) = [time, lefttraces(bead,frame), newright(bead,frame)];
         time = time + timeStep;
     end
-    csvwrite(strcat(outputPath,fnameonly,'trace',int2str(bead),'.csv'),traceMat);
+    individualTraceOut = strcat(outputPath,fnameonly,'trace',int2str(bead),'.csv');
+    csvwrite(individualTraceOut{1},traceMat);
 end
 end

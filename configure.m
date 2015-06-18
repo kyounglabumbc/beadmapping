@@ -4,7 +4,7 @@ function [ params ] = configure()
     minRadius = input('Please enter the min radius (default is 2): ');
     maxRadius = input('Please enter the max radius (default is 7): ');
     sensitivity = input('Please enter the sensitivity (from 0 to 1, default is 1): ');
-    edgethreshold = input('Please enter the edge threshold (from 0 to 1, default is 0.05): ');
+    edgethreshold = input('Please enter the threshold to start with consider lowest intersity of real signal: ');
     if(input('Do you want to change the output directory? Enter y or n: ', 's')=='y')
         outputPath = uigetdir('./');
     else
@@ -16,7 +16,7 @@ function [ params ] = configure()
     params{3} = sensitivity;
     params{4} = edgethreshold;
     params{5} = outputPath;
-    fileID = fopen('config.txt','w');
+    fileID = fopen('C:\Users\HPENVY\Documents\MATLAB\beadmapping\config.txt','w');
     for i=1:4
         fprintf(fileID, '%f,', params{i});
     end

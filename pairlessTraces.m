@@ -1,7 +1,7 @@
 function [  ] = pairlessTraces(image, centers, radii, outputPath, fnameStem)
 %PAIRLESSTRACES Summary of this function goes here
 %   Detailed explanation goes here
-
+width=512;
 %separate left and right centers,
 %get the circles on the left side
 lcenters = centers(centers(:,1)<(width/2),:);

@@ -6,8 +6,9 @@ function [centroids, radii, labelmask ] = findPeaks( image, MinThreshold, maxRad
     centroids = [];
     radii = [];
     labelmask = zeros(size(image));
-   
-        for i = MaxThreshold :-1000: MinThreshold
+        %step size is 0.5% of the difference between max and min threshold
+        step_size = -0.005*(MaxThreshold-MinThreshold); %we are decrementing
+        for i = MaxThreshold :step_size: MinThreshold
             mask = imThreshold(image, i);
             labelMask = bwlabel(mask); % finds the connected objects
             rads=regionprops(labelMask,'MajorAxisLength');

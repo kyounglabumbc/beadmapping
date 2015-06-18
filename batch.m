@@ -23,7 +23,7 @@ if(input('Would you like to change the config? Enter y or n: ', 's') == 'y')
 else %if not, load the config
     try
         %try to load config file
-        fileID = fopen('config.txt');
+        fileID = fopen('C:\Users\HPENVY\Documents\MATLAB\beadmapping\config.txt');
         params = textscan(fileID, '%f,%f,%f,%f,%s');
         fclose(fileID);
     catch
