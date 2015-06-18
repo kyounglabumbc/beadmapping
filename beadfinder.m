@@ -129,11 +129,17 @@ for i=1:m
     rcenters(i,:) = [u,v];
 end
 
-viscircles(lcenters, fradii,'EdgeColor','b');
-viscircles(rcenters, fradii,'EdgeColor','b');
+[newLCircles, newRCircles, newRadii] = addCirclesManual(avgA, lcenters, rcenters, fradii, tForm);
+
+% viscircles(lcenters, fradii,'EdgeColor','b');
+% viscircles(rcenters, fradii,'EdgeColor','b');
 %show the circles
 %imshow(im2uint16(avgA, 'indexed'));
 %plot original
+lcenters = [lcenters; newLCircles];
+rcenters = [rcenters; newRCircles];
+fradii = [fradii; newRadii];
+
 colormap gray;
 figure(1);
 colormap gray;
