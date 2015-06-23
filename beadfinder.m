@@ -161,9 +161,15 @@ righttraces = getTraces(A, rcenters,fradii);
 ltracename = strcat(outputPath,fnameonly,'masterleft.csv');
 rtracename = strcat(outputPath,fnameonly,'masterright.csv');
 coordname = strcat(outputPath,fnameonly,'coordinates.csv');
-csvwrite(ltracename{1}, lefttraces);
-csvwrite(rtracename{1}, righttraces);
-csvwrite(coordname{1}, [lcenters(:,1),512-lcenters(:,2),rcenters(:,1),512-rcenters(:,2)]);
+try
+    csvwrite(ltracename{1}, lefttraces);
+    csvwrite(rtracename{1}, righttraces);
+    csvwrite(coordname{1}, [lcenters(:,1),512-lcenters(:,2),rcenters(:,1),512-rcenters(:,2)]);
+catch
+    csvwrite(ltracename, lefttraces);
+    csvwrite(rtracename, righttraces);
+    csvwrite(coordname, [lcenters(:,1),512-lcenters(:,2),rcenters(:,1),512-rcenters(:,2)]);
+end
 [r, c] = size(lefttraces);
 
 newright = righttraces-bleed*lefttraces;
@@ -179,6 +185,10 @@ for bead=1:r
         time = time + timeStep;
     end
     individualTraceOut = strcat(outputPath,fnameonly,'trace',int2str(bead),'.csv');
-    csvwrite(individualTraceOut{1},traceMat);
+    try
+        csvwrite(individualTraceOut{1},traceMat);
+    catch
+        csvwrite(individualTraceOut,traceMat);
+    end
 end
 end
