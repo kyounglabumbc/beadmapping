@@ -76,9 +76,9 @@ if(size(left,1)<3 || size(right,1)<3)
    getTracesAnyway = input(' Would you like to get traces anyway? y or n: ', 's');
    if(getTracesAnyway == 'y')
       pairlessTraces(A, centers, radii, outputPath, fnameonly);
-      exit;
+      error(not enough traces);
    else
-      exit;
+      error(not enough traces);
    end
 end
 %create an affine transformation 
