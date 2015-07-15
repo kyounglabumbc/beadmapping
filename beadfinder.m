@@ -1,6 +1,7 @@
 function [  ] = beadfinder()
 [FileName,PathName,FilterIndex]=uigetfile('*.sif;*.SIF', 'Select SIF'); % opens dialog to let the user select sif to open
 fname=strcat(PathName,FileName); % sets up the file name
+[fpathonly, fnameonly, fext] = fileparts(fname)
 try
     %try to load config file
     fileID = fopen('config.txt');
@@ -27,7 +28,7 @@ if iscellstr(path)
     path = path{1};
 end
 %load the transformation file
-tFname = strcat(path,'\mapping\',coeffName,'_warp.mat');
+tFname = strcat(path,'mapping\',coeffName,'_warp.mat');
 tFormStruct = load(tFname);
 tForm = tFormStruct.tForm;
 
@@ -57,6 +58,7 @@ cleanA = clean(avgA, floor(0.45*radius));
 done = 0;
 while(~done)
     [lcenters, rcenters, fradii] = changeThreshold(cleanA, radius, edgethreshold, tForm, avgA);
+    disp(strcat('found ','_',int2str(size(lcenters,1)), ' ',' pairs'));
     if(input(strcat('Stopping threshold is currently_',num2str(edgethreshold),'. Would you like to change it? [y or n]'),'s')=='y')
         edgethreshold = input(strcat('Please enter a new threshold (image max is:_', num2str(max(max(cleanA))), '): '));
     else
@@ -82,18 +84,14 @@ righttraces = getTraces(A, rcenters,fradii);
 %lcoordinates = [lcenters(:,2), 512-lcenters(:,1)];
 %rcoordinates = [rcenters(:,2), 512-rcenters(:,1)];
 %write the master csvs
-ltracename = strcat(path,'\output\',fnameonly,'masterleft.csv');
-rtracename = strcat(path,'\output\',fnameonly,'masterright.csv');
-coordname = strcat(path,'\output\',fnameonly,'coordinates.csv');
-try
-    csvwrite(ltracename{1}, lefttraces);
-    csvwrite(rtracename{1}, righttraces);
-    csvwrite(coordname{1}, [lcenters(:,1),512-lcenters(:,2),rcenters(:,1),512-rcenters(:,2)]);
-catch
-    csvwrite(ltracename, lefttraces);
-    csvwrite(rtracename, righttraces);
-    csvwrite(coordname, [lcenters(:,1),512-lcenters(:,2),rcenters(:,1),512-rcenters(:,2)]);
-end
+ltracename = strcat(path,'output\',fnameonly,'masterleft.csv');
+rtracename = strcat(path,'output\',fnameonly,'masterright.csv');
+coordname = strcat(path,'output\',fnameonly,'coordinates.csv');
+%write the traces
+csvwrite(ltracename, lefttraces);
+csvwrite(rtracename, righttraces);
+csvwrite(coordname, [lcenters(:,1),512-lcenters(:,2),rcenters(:,1),512-rcenters(:,2)]);
+
 [r, c] = size(lefttraces);
 
 newright = righttraces-bleed*lefttraces;
@@ -108,7 +106,7 @@ for bead=1:r
         traceMat(frame-1,:) = [time, lefttraces(bead,frame), newright(bead,frame)];
         time = time + timeStep;
     end
-    individualTraceOut = strcat(path,'\output\',fnameonly,'trace',int2str(bead),'.csv');
+    individualTraceOut = strcat(path,'output\',fnameonly,'trace',int2str(bead),'.csv');
     try
         csvwrite(individualTraceOut{1},traceMat);
     catch
