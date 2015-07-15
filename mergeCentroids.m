@@ -28,7 +28,8 @@ function [ mergedCentroids, mergedRadii ] = mergeCentroids( newCentroids, oldCen
            if(newRadii(curLabel) <= maxRadius)
                 mergedRadii(i) = newRadii(curLabel);
            else
-               mergedRadii(i) = oldRadii(i);
+               %mergedRadii(i) = oldRadii(i);
+               mergedRadii(i) = maxRadius;
            end
        end
       
@@ -47,10 +48,10 @@ function [ mergedCentroids, mergedRadii ] = mergeCentroids( newCentroids, oldCen
        curLabel = labelMask(row, col);
             
        if(newRadii(i) <= maxRadius && curLabel > 0)         
-                newCLabels(counterIndex) = curLabel;  
-                acceptedNewCentroids(counterIndex,:) = newCentroids(i,:);
-                newCentroidRadii(counterIndex) = newRadii(i);
-                counterIndex = counterIndex + 1;
+           newCLabels(counterIndex) = curLabel;  
+           acceptedNewCentroids(counterIndex,:) = newCentroids(i,:);
+           newCentroidRadii(counterIndex) = newRadii(i);
+           counterIndex = counterIndex + 1;           
        end
     end
     %get the indexes of the members of the new centroid labels that aren't 

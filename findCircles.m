@@ -1,10 +1,13 @@
-function [ centers, radii ] = findCircles( imageArr, rMin, rMax, sensitivity , edgethreshold)
+function [ centers, radii ] = findCircles( imageArr, radius, edgethreshold)
 %FINDCIRCLES Summary of this function goes here
 %   Detailed explanation goes here
 
-%[centers, radii] = imfindcircles(imageArr,[rMin rMax],'ObjectPolarity','bright' ,'Sensitivity',sensitivity, 'EdgeThreshold', edgethreshold);
-
-[centers, radii, mask] = findPeaks(imageArr, edgethreshold, rMax);
+%get the initial centers with variable radii
+[centers, radii, mask] = findPeaks(imageArr, edgethreshold, radius);
+%standardize the radii by removing anything smaller than the user-spec
+goodRadii = radii == radius;
+centers = centers(goodRadii,:);
+radii = radii(goodRadii,:);
 
 end
 
